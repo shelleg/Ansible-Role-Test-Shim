@@ -78,6 +78,7 @@ function finish {
     printf "Removing Docker container...\n"
     docker rm -f $container_id
   fi
+  printf "\n"
 }
 trap finish EXIT
 function run {
