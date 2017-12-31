@@ -77,13 +77,28 @@ function finish {
   if [ "$cleanup" = true ]; then
     printf "Removing Docker container...\n"
     docker rm -f $container_id
+  else
+    printf ${green}"${container_id} is at your disposal\n you can use it like so:
+      for playing around:
+    docker run --detach --volume=$PWD:/etc/ansible/roles/role_under_test:rw --name $container_id $opts $container $init
+      for running the playbook:
+    docker exec $container_id env TERM=xterm env ANSIBLE_FORCE_COLOR=1 ansible-playbook /etc/ansible/roles/role_under_test/tests/$playbook
+      for syntax checking:
+    docker exec --tty $container_id env TERM=xterm ansible-galaxy install -r /etc/ansible/roles/role_under_test/tests/requirements.yml
+      for idempotency tests:
+    docker exec $container_id ansible-playbook /etc/ansible/roles/role_under_test/tests/$playbook | tee -a $idempotence
+    tail $idempotence \
+      | grep -q 'changed=0.*failed=0' \
+      && (printf ${green}'Idempotence test: pass'${neutral}"\n") \
+      || (printf ${red}'Idempotence test: fail'${neutral}"\n" && exit 1)
+    "
   fi
   printf "\n"
 }
 trap finish EXIT
 function run {
   # Run the container using the supplied OS.
-  printf ${green}"Starting Docker container: geerlingguy/docker-$distro-ansible."${neutral}"\n"
+  printf ${green}"Starting Docker container: $container ..."${neutral}"\n"
   docker pull geerlingguy/docker-$distro-ansible:latest
   docker run --detach --volume="$PWD":/etc/ansible/roles/role_under_test:rw --name $container_id $opts $container $init
 
